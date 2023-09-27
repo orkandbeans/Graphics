@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<meta charset="utf-8" name="viewport" content = "width=device-width, initial-scale=1">
+<html lang = "en">
+    <head>
+        <title>My first moving triangle</title>
+        <style>
+            #the-canvas { border: 1px solid darkblue; }
+        </style>    
+        <script src2="vector_template.js"></script>
+        <script src="matrix_template.js"></script>
+    </head>
+    <body>
+        <canvas id = "the-canvas" width = "800" height = "600"></canvas>
+        <script>
+            let canvas = document.getElementById( 'the-canvas' );
+            let rotation_amnt_xy = 0.0;
+            let rotation_amnt_xz = 0.0;
+            let rotation_amnt_yz = 0.0;
+            const ROTATION_SPEED_XZ = 0.5;
+            const ROTATION_SPEED_XY = 0.25;
+            const ROTATION_SPEED_YZ = 0.05;
+            /** @type {WebGLRenderingContext} */
+            /** Sets uniform data for a row-major matrix4
+            @param {WebGLRenderingContext} gl
+            @param {WebGLProgram} program
+            @param {string} name
+            @param {number[]} data */
+            function set_uniform_matrix4( gl, program, name, data ) {
+                const loc = gl.getUniformLocation( program, name );
+                gl.uniformMatrix4fv( loc, true, data );
+            }
+
+            let gl = canvas.getContext( 'webgl2' );
+            gl.clearColor( 0.9, 0.9, 1.0, 1 );
+            gl.enable( gl.DEPTH_TEST );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+
+            let verts = [
+                0, 0.5, 0, 1, 0, 0, 1,
+                0.5, -0.5, 0, 0, 1, 0, 1,
+                -0.5, -0.5, 0, 0, 0, 1, 1,
+                ];
+
+            let vertex_buffer = gl.createBuffer();
+            gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
+            gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+            gl.bindBuffer( gl.ARRAY_BUFFER, null );
+
+            let vertex_source =
+                ` #version 300 es
+                precision mediump float;
+                uniform mat4 modelview; // this is the matrix
+
+                in vec3 coordinates;
+                in vec4 color;
+                
+                out vec4 v_color;
+
+                void main( void ) { //vv do the vector multiplication
+                    gl_Position = modelview * vec4( coordinates, 1.0 );
+                    v_color = color; } `;
+
+            let fragment_source =
+                ` #version 300 es
+                precision mediump float;
+                in vec4 v_color;
+                out vec4 f_color;
+                
+                void main( void ) {
+                    f_color =  v_color;
+                }`;
+
+            let vert_shader = gl.createShader( gl.VERTEX_SHADER );
+            let frag_shader = gl.createShader( gl.FRAGMENT_SHADER );
+
+            gl.shaderSource( vert_shader, vertex_source );
+            gl.shaderSource( frag_shader, fragment_source )
+
+            gl.compileShader( vert_shader );
+            gl.compileShader( frag_shader );
+
+            let shader_program = gl.createProgram();
+
+            gl.attachShader( shader_program, vert_shader );
+            gl.attachShader( shader_program, frag_shader );
+            
+            gl.linkProgram( shader_program );
+
+            gl.useProgram( shader_program );
+
+            let atr_coord = gl.getAttribLocation( shader_program, "coordinates");
+            let atr_color = gl.getAttribLocation( shader_program, "color");
+
+            gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
+            gl.vertexAttribPointer( atr_coord, 3, gl.FLOAT, false, 28, 0 );
+            gl.vertexAttribPointer( atr_color, 4, gl.FLOAT, false, 28, 12 );
+            gl.enableVertexAttribArray( atr_coord );
+            gl.enableVertexAttribArray( atr_color );
+            let last_update = performance.now();
+            requestAnimationFrame(render);
+            
+            function render( now ) { 
+                requestAnimationFrame( render );
+                
+                let time_delta = ( now - last_update ) / 1000;
+                last_update = performance.now();
+
+                rotation_amnt_xy += ROTATION_SPEED_XY * time_delta;
+                rotation_amnt_xz += ROTATION_SPEED_XZ * time_delta;
+                rotation_amnt_yz += ROTATION_SPEED_YZ * time_delta;
+                rotation_amnt_xy %= 1.0;
+                rotation_amnt_xz %= 1.0;
+                rotation_amnt_yz %= 1.0;
+
+                let modelXY = Mat4.rotation_xy(rotation_amnt_xy);
+                let modelXZ = Mat4.rotation_xz(rotation_amnt_xz);
+                let modelYZ = Mat4.rotation_yz(rotation_amnt_yz);
+                
+                let model = modelYZ.mul(modelXZ.mul(modelXY));
+
+
+                gl.clear( gl.COLOR_BUFFER_BIT );
+                gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
+
+                set_uniform_matrix4( gl, shader_program, "modelview", model.data );
+                gl.drawArrays( gl.TRIANGLES, 0, 3 );
+                
+            }
+            
+
+        </script>
+    </body>
+</html>
