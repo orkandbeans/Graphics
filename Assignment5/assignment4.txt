@@ -1,0 +1,41 @@
+# Project 4: Meshes
+
+## Introduction
+It's time to show that you understand how to define meshes as element arrays. You will be given a mesh in .obj format, and you must draw it slowly rotating.
+
+Steps:
+* Write a function that loads the vertices and indices from the .obj file. 
+* You will need to follow the instructions in the slides to use XMLHttpRequest to load the .obj text file.
+* After doing this, parse the text into vertexes and elements.  
+* Load the vertices and elements into a mesh. Render it every frame.
+* Use a modelview matrix to rotate the mesh slowly: 25% turn / second.
+* Use a scale and translation matrix to make the mesh fit in screen. This doesn't have to be perfect, but it should look like right.gif. You will need to examine the vertices yourself 
+* Your code should draw teapot.obj by default. The other .obj files are there for debugging.
+* All the meshes use counter-clockwise winding. 
+
+Goals:
+* Load an .obj file successfully
+
+Hints:
+* **Warning!** When testing your code, it is *required* that you run it from a webserver. The slides explain how to do this. If you don't, you will receive a CORS error when trying to load the .obj file. We will be testing your code from a webserver.
+* Meshes can all have different scales. Some of them are huge, some are tiny. You will need to adjust the scale shown on screen to make them fit. 
+* OBJ files start numbering vertices at 1, not 0. If you don't handle this correctly, your render will look like "wrong.gif".
+* "right.gif" shows what your output should look like. I adjusted the color so that it varies with the y-value, but you don't need to do that if you don't want. 
+* Start with triangle.obj and diamond.obj. These are simple, easy-to-debug files.
+
+## How to submit
+You must copy and paste all code from all files being submitted into the text box. This is for plagiarism detection. If you don't do this, you can lose potentially all your credit for the assignment, and it will cause me to investigate whether you plagiarized. The same applies if the code you type into the box is different from what you submit in the .zip. 
+
+After you have done this, zip your code together in a form that it can easily be read and run by the TA. Note: your code must work to receive full credit, so make sure to test by running from the folder before you submit it. 
+
+## Grading
+Discretionary: 20%
+Mesh loads correctly: 50%
+Mesh rotation is correct: 10%
+Mesh scale is correct: 10% 
+Mesh culling is correct: 10%
+
+Note about culling: you won't be able to tell by looking at the teapot whether you have the winding order correct. However, the triangle and diamond should only be visible from one side. So you should see them disappear and reappear as they rotate. If you don't see this, you aren't setting up culling correctly. 
+
+## Plagiarism
+This is an individual assignment! Between my code and the slides, you should have everything you need. If you aren't sure whether you can use something, please ask me. Feel free to discuss the assignment with peers, but please do not share code without permission.

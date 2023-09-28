@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<meta charset="utf-8" name="viewport" content = "width=device-width, initial-scale=1">
+<html lang = "en">
+    <head>
+        <title>My first moving mesh</title>
+        <style>
+            #the-canvas { border: 1px solid darkblue; }
+        </style>    
+        <script src="vector_template.js"></script>
+        <script src="matrix_template.js"></script>
+        <script src="mesh_template.js"></script>
+        <script src="lib.js"></script>
+    </head>
+    <body>
+        <canvas id = "the-canvas" width = "800" height = "600"></canvas>
+        <script>
+            let canvas = document.getElementById( 'the-canvas' );
+            let gl = canvas.getContext( 'webgl2' );
+            let vertex_buffer = gl.createBuffer();
+
+            gl.clearColor( 0.9, 0.9, 1.0, 1 );
+            gl.enable( gl.DEPTH_TEST );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+            gl.frontFace(gl.CW);
+            gl.bindBuffer( gl.ARRAY_BUFFER, vertex_buffer );
+
+            let vertex_source =
+                ` #version 300 es
+                precision mediump float;
+                uniform mat4 modelview; // this is the matrix
+
+                in vec3 coordinates;
+                in vec4 color;
+                
+                out vec4 v_color;
+
+                void main( void ) { //vv do the vector multiplication
+                    gl_Position = modelview * vec4( coordinates, 1.0 );
+                    v_color = color; } `;
+
+            let fragment_source =
+                ` #version 300 es
+                precision mediump float;
+                in vec4 v_color;
+                out vec4 f_color;
+                
+                void main( void ) {
+                    f_color =  v_color;
+                }`;
+
+            shader_program = create_compile_and_link_program(gl,vertex_source,fragment_source);
+            
+            const ROTATION_SPEED = 0.25;
+            let file_name = 'teapot.obj';
+            let rotation_amnt = 0.0;
+            let mesh = null;
+            let scaleModel = Mat4.scale(0.2,0.2,0.2);
+            let transModel = Mat4.translation(0,-0.5,0);
+
+            mesh = Mesh.from_obj_file(gl,file_name,shader_program,loadMesh);
+
+            let last_update = performance.now();
+            requestAnimationFrame(render);
+            
+            function loadMesh( load ){
+                mesh = load;
+            }
+
+            function render( now ) { 
+                
+                gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+                let time_delta = ( now - last_update ) / 1000;
+                last_update = performance.now();
+
+                rotation_amnt += ROTATION_SPEED * time_delta;
+                rotation_amnt %= 1.0;
+
+                let rotationModel = Mat4.rotation_xz(rotation_amnt);
+                let model = transModel.mul(scaleModel.mul(rotationModel));
+
+                if(mesh != null){
+                    gl.useProgram(mesh.program);
+                    set_uniform_matrix4( gl, shader_program, "modelview", model.data );
+                    mesh.render(gl);
+                }
+
+                requestAnimationFrame( render );
+            }
+
+            
+
+        </script>
+    </body>
+</html>
